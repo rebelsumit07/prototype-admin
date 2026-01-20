@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import API from "../api/api";
 
 const AddEditFood = ({ item, onClose, onSuccess }) => {
+  // 🔒 SAFETY: fallback if onSuccess is not a function
+  const safeOnSuccess =
+    typeof onSuccess === "function" ? onSuccess : () => {};
+
   const [name, setName] = useState(item ? item.name : "");
   const [description, setDescription] = useState(item ? item.description : "");
   const [price, setPrice] = useState(item ? item.price : "");
@@ -16,10 +20,12 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
   const fetchCategories = async () => {
     try {
       const res = await API.get("/food");
-      const uniqueCategories = Array.from(new Set(res.data.map(f => f.category || "General")));
+      const uniqueCategories = Array.from(
+        new Set(res.data.map(f => f.category || "General"))
+      );
       setCategories(uniqueCategories);
     } catch (err) {
-      console.error(err);
+      console.error("Category fetch error:", err);
     }
   };
 
@@ -29,67 +35,82 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
 
   const handleSubmit = async () => {
     const finalCategory = isAddingNew ? newCategory.trim() : category;
+
     if (!name || !price || !finalCategory) {
       alert("Please fill all required fields!");
       return;
     }
 
-    if (!window.confirm(item
+    const confirmMsg = item
       ? `Are you sure you want to edit "${name}"?`
-      : `Are you sure you want to add "${name}"?`
-    )) return;
+      : `Are you sure you want to add "${name}"?`;
+
+    if (!window.confirm(confirmMsg)) return;
 
     try {
-  const formData = new FormData();
-  formData.append("name", name);
-  formData.append("description", description);
-  formData.append("price", price);
-  formData.append("category", finalCategory);
-  if (image) formData.append("image", image);
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("price", price);
+      formData.append("category", finalCategory);
+      if (image) formData.append("image", image);
 
-  let res;
-  if (item) {
-    res = await API.put(`/food/${item._id}`, formData);
-  } else {
-    res = await API.post("/food", formData);
-  }
+      let res;
+      if (item) {
+        res = await API.put(`/food/${item._id}`, formData);
+      } else {
+        res = await API.post("/food", formData);
+      }
 
-  if (res.status >= 200 && res.status < 300) {
-    onSuccess(item ? "✅ Item edited successfully!" : "✅ Item added successfully!");
-  } else {
-    alert("Something went wrong! Server returned status: " + res.status);
-  }
-} catch (err) {
-  console.error(err);
-  // Only alert if truly an error (network/server)
-  alert("Check menu for confirmation: " + (err.response?.data?.message || err.message));
-}
-}
+      if (res && res.status >= 200 && res.status < 300) {
+        safeOnSuccess(
+          item
+            ? "✅ Item edited successfully!"
+            : "✅ Item added successfully!"
+        );
+      } else {
+        alert("Server error: " + (res?.status || "unknown"));
+      }
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert(
+        err?.response?.data?.message ||
+          "Network or server error. Check console."
+      );
+    }
+  };
 
   return (
     <>
       {/* Overlay */}
-      <div style={{
-        position: "fixed",
-        top: 0, left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.4)",
-        zIndex: 999
-      }} onClick={onClose} />
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(0,0,0,0.4)",
+          zIndex: 999
+        }}
+        onClick={onClose}
+      />
 
-      {/* Modal Box */}
-      <div style={{
-        position: "fixed",
-        top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: "450px",
-        backgroundColor: "#fff",
-        padding: "30px 25px",
-        borderRadius: "10px",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-        zIndex: 1000,
-      }}>
+      {/* Modal */}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "450px",
+          backgroundColor: "#fff",
+          padding: "30px 25px",
+          borderRadius: "10px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+          zIndex: 1000
+        }}
+      >
         <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
           {item ? "Edit Menu Item" : "Add Menu Item"}
         </h2>
@@ -98,7 +119,7 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
           placeholder="Name"
           value={name}
           onChange={e => setName(e.target.value)}
-          style={{ width: "100%", padding: "8px", marginBottom: "15px", fontSize: "14px" }}
+          style={{ width: "100%", padding: "8px", marginBottom: "15px" }}
         />
 
         <textarea
@@ -106,7 +127,7 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={3}
-          style={{ width: "100%", padding: "8px", marginBottom: "15px", fontSize: "14px" }}
+          style={{ width: "100%", padding: "8px", marginBottom: "15px" }}
         />
 
         <input
@@ -114,10 +135,9 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
           placeholder="Price"
           value={price}
           onChange={e => setPrice(e.target.value)}
-          style={{ width: "100%", padding: "8px", marginBottom: "15px", fontSize: "14px" }}
+          style={{ width: "100%", padding: "8px", marginBottom: "15px" }}
         />
 
-        {/* Category selection */}
         <select
           value={isAddingNew ? "__new" : category}
           onChange={e => {
@@ -129,7 +149,7 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
               setCategory(e.target.value);
             }
           }}
-          style={{ width: "100%", padding: "8px", marginBottom: "15px", fontSize: "14px" }}
+          style={{ width: "100%", padding: "8px", marginBottom: "15px" }}
         >
           <option value="" disabled>Select Category</option>
           {categories.map((c, idx) => (
@@ -143,7 +163,7 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
             placeholder="Enter new category"
             value={newCategory}
             onChange={e => setNewCategory(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "15px", fontSize: "14px" }}
+            style={{ width: "100%", padding: "8px", marginBottom: "15px" }}
           />
         )}
 
@@ -169,6 +189,7 @@ const AddEditFood = ({ item, onClose, onSuccess }) => {
           >
             {item ? "Save Changes" : "Add Item"}
           </button>
+
           <button
             onClick={onClose}
             style={{
