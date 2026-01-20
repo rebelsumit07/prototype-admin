@@ -62,7 +62,7 @@ const Menu = () => {
       message: `Are you sure you want to delete "${item.name}"?`,
       onConfirm: async () => {
         try {
-          await API.delete(`/food/NPR{item._id}`);
+         await API.delete(`/food/${item._id}`);
           setToast("✅ Item deleted successfully!");
           fetchMenu();
           setTimeout(() => setToast(""), 3000);
@@ -217,4 +217,5 @@ const Menu = () => {
 };
 
 export default Menu;
+
 
