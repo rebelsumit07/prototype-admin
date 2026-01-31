@@ -9,7 +9,7 @@ export default function Reservations() {
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const res = await API.get("/reservations"); // your backend route
+        const res = await API.delete(`/reservations/${r._id}`); // your backend route
         setReservations(res.data || []);
       } catch (err) {
         console.error(err);
@@ -117,3 +117,4 @@ export default function Reservations() {
     </div>
   );
 }
+
