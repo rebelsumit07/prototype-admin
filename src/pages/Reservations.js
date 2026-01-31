@@ -1,16 +1,17 @@
 // Reservations.js
 import React, { useEffect, useState } from "react";
-import API from "../api/api";
 
 export default function Reservations() {
   const [reservations, setReservations] = useState([]);
-  const [notification, setNotification] = useState(null); // For bottom-left notification
+  const [notification, setNotification] = useState("");
 
+  // Fetch reservations
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const res = await API.delete(`/reservations`); // your backend route
-        setReservations(res.data || []);
+        const res = await fetch("https://prototype-xcoa.onrender.com/reservations");
+        const data = await res.json();
+        setReservations(data || []);
       } catch (err) {
         console.error(err);
       }
@@ -18,32 +19,36 @@ export default function Reservations() {
     fetchReservations();
   }, []);
 
-  // Show notification for 3 seconds
-  const showNotification = (msg) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
-  };
-
+  // Delete reservation
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete the reservation for ${name}?`)) {
-      try {
-        await API.delete(`/reservations/${id}`);
+    const confirmDelete = window.confirm(`Are you sure you want to delete the reservation for ${name}?`);
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`https://prototype-xcoa.onrender.com/reservations/${id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (res.ok) {
         setReservations(prev => prev.filter(r => r._id !== id));
-        showNotification(`Reservation for ${name} deleted successfully ✅`);
-      } catch (err) {
-        console.error(err);
-        showNotification(`Failed to delete reservation for ${name}. ❌`);
+        setNotification(`Reservation for ${name} deleted successfully`);
+        setTimeout(() => setNotification(""), 4000); // hide after 4s
+      } else {
+        alert(data.message || "Failed to delete. Please try again.");
       }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting reservation. Please try again.");
     }
   };
 
   return (
     <div style={{ padding: "20px", fontFamily: "'Poppins', sans-serif" }}>
       <h1 style={{ marginBottom: "20px", color: "#2f2f2f" }}>Reservations</h1>
-      
+
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
         gap: "20px"
       }}>
         {reservations.length === 0 ? (
@@ -57,8 +62,8 @@ export default function Reservations() {
               padding: "20px",
               borderRadius: "12px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              transition: "transform 0.2s",
-              position: "relative"
+              position: "relative",
+              transition: "transform 0.2s"
             }}
             onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
             onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
@@ -69,53 +74,56 @@ export default function Reservations() {
               <p style={{ margin: "4px 0", color: "#555" }}><strong>Time:</strong> {r.time}</p>
               <p style={{ margin: "4px 0", color: "#555" }}><strong>Guests:</strong> {r.guests}</p>
               <p style={{ margin: "4px 0", color: "#555" }}><strong>Message:</strong> {r.message || "No message"}</p>
-              
-              {/* Delete Button */}
+
               <button
                 onClick={() => handleDelete(r._id, r.name)}
                 style={{
-                  marginTop: "12px",
-                  padding: "8px 14px",
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  padding: "6px 12px",
+                  fontSize: "12px",
                   background: "#e74c3c",
                   color: "#fff",
                   border: "none",
-                  borderRadius: "8px",
+                  borderRadius: "6px",
                   cursor: "pointer"
                 }}
-              >
-                Delete
-              </button>
+              >Delete</button>
             </div>
           ))
         )}
       </div>
 
-      {/* Notification bar */}
+      {/* Right-bottom notification */}
       {notification && (
         <div style={{
           position: "fixed",
           bottom: "20px",
-          left: "20px",
-          background: "#27ae60",
+          right: "20px",
+          background: "#4caf50",
           color: "#fff",
-          padding: "14px 20px",
+          padding: "12px 20px",
           borderRadius: "8px",
           boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-          zIndex: 9999,
-          animation: "slideIn 0.4s forwards"
+          fontWeight: "500",
+          zIndex: 1000,
+          transform: "translateX(120%)",
+          animation: "slideIn 0.5s forwards"
         }}>
           {notification}
         </div>
       )}
 
-      <style>{`
+      {/* Slide-in animation */}
+      <style>
+        {`
         @keyframes slideIn {
-          from { transform: translateX(-120%); opacity: 0; }
+          from { transform: translateX(120%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 }
-
-
