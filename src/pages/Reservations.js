@@ -47,6 +47,8 @@ export default function Reservations() {
               <p style={{ margin: "4px 0", color: "#555" }}><strong>Date:</strong> {r.date}</p>
               <p style={{ margin: "4px 0", color: "#555" }}><strong>Time:</strong> {r.time}</p>
               <p style={{ margin: "4px 0", color: "#555" }}><strong>Guests:</strong> {r.guests}</p>
+              <p style={{ margin: "4px 0", color: "#555" }}><strong>Message:</strong> {r.message || "No message"}</p>
+
             </div>
           ))
         )}
@@ -54,3 +56,4 @@ export default function Reservations() {
     </div>
   );
 }
+
