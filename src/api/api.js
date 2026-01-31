@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create an axios instance with your backend URL
 const API = axios.create({
-  baseURL: "https://prototype-xcoa.onrender.com/api", // your backend server
+  baseURL: "https://prototype-xcoa.onrender.com", // your backend server
 });
 
 // Add admin token to all requests if available
@@ -15,4 +15,5 @@ API.interceptors.request.use((config) => {
 });
 
 export default API;
+
 
